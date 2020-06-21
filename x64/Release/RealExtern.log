@@ -1,0 +1,24 @@
+﻿  Building 'RealExtern' with toolset 'WindowsKernelModeDriver10.0' and the 'Universal' target platform.
+  Stamping x64\Release\RealExtern.inf
+  Stamping [Version] section with DriverVer=06/10/2020,19.8.32.223
+C:\Users\jguo5\source\repos\realExtern-master\RealExtern.inf(5-5): warning 1324: [Version] section should specify PnpLockdown=1.
+  Driver.cpp
+  RealExtern.vcxproj -> C:\Users\jguo5\source\repos\realExtern-master\x64\Release\RealExtern.sys
+  Done Adding Additional Store
+  Successfully signed: C:\Users\jguo5\source\repos\realExtern-master\x64\Release\RealExtern.sys
+  
+  Driver is 'Universal'.
+  ........................
+  Signability test complete.
+  
+  Errors:
+  None
+  
+  Warnings:
+  None
+  
+  Catalog generation complete.
+  C:\Users\jguo5\source\repos\realExtern-master\x64\Release\RealExtern\realextern.cat
+  Done Adding Additional Store
+  Successfully signed: C:\Users\jguo5\source\repos\realExtern-master\x64\Release\RealExtern\realextern.cat
+  
