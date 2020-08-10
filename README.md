@@ -7,4 +7,6 @@ WARNING:
 it is detected
 
 
-How to
+read this source for an example of how to use:
+
+https://github.com/jguo12/RealExtern-example-glow
