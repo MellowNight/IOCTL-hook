@@ -1,6 +1,8 @@
 # realExtern
 kernel driver that hooks ioctl with multiple abilities such as sig scanning and read/writing
 
+it simply places a mov rax, xxx jmp rax inside of DiskDeviceControl and directs code flow to realExtern.sys
+
 
 WARNING:
 
