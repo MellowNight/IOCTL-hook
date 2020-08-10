@@ -3,7 +3,7 @@ kernel driver that hooks ioctl with multiple abilities such as sig scanning and 
 
 it simply places a mov rax, xxx jmp rax inside of DiskDeviceControl and directs code flow to realExtern.sys
 
-hook offsets may change across windows upadtes.
+hook offsets may change across windows updates.
 
 
 WARNING:
