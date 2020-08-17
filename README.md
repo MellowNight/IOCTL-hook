@@ -5,12 +5,14 @@ it simply places a mov rax, xxx jmp rax inside of DiskDeviceControl and directs 
 
 hook offsets may change across windows updates.
 
+##
+1903-1909 windows hook offsets: 0x16AF and 0x32A2
+2004 windows hook offsets: 0x112E and 2D90
 
-WARNING:
+
+(search for these values in the driver.cpp)
+
+
+##WARNING:
 
 it is detected and the code is very messy
-
-
-read this source for an example of how to use:
-
-https://github.com/jguo12/RealExtern-example-glow
