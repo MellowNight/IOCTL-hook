@@ -167,7 +167,7 @@ BOOLEAN PlaceEverythingHook()
 	ULONG		diskSysSize;
 	PVOID		diskSysBase	 =		getDiskSysBase(&diskSysSize);
 
-	ULONG64		returnPlaceOfIOCTL	 =	 (ULONG64)diskSysBase + 0x16AF;
+	ULONG64		returnPlaceOfIOCTL	 =	 (ULONG64)diskSysBase + 0x16AF;	//112E for 1903/1909
 
 	//grab values from rsi and r14 (device object and pirp)
 
@@ -247,7 +247,7 @@ BOOLEAN PlaceDiskHook()
 
 
 	//DiskIoctlVerify
-	ULONG64		hookLocation = (ULONG64)diskSysBase + 0x32A2;
+	ULONG64		hookLocation = (ULONG64)diskSysBase + 0x32A2;	//2D90 for 1903 and 1909
 
 
 	//  "\x48\xB8"  EVERYTHING address "\xFF\xE0";   
