@@ -7,6 +7,7 @@ hook offsets may change across windows updates.
 
 ## hook offsets
 1903-1909 windows hook offsets: 0x16AF and 0x32A2
+
 2004 windows hook offsets: 0x112E and 2D90
 
 
