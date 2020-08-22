@@ -17,3 +17,5 @@ hook offsets may change across windows updates.
 ## WARNING:
 
 it is detected and the code is very messy
+
+## NOTE: I am the real creator of this driver, other people have been trying to take credit for my work (its not a good driver anyways)
