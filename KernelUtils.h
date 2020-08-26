@@ -99,18 +99,15 @@ PVOID getKernelBase(OUT PULONG pSize)
 
 
 
-
-PVOID getDiskSysBase(OUT PULONG pSize)
+PVOID getDriverBaseAddress(OUT PULONG pSize, const char* driverName)
 {
 	NTSTATUS Status = STATUS_SUCCESS;
 	ULONG Bytes = 0;
 	PRTL_PROCESS_MODULES arrayOfModules;
 
 
-
-	PVOID			diskSysBase = 0;
-	ULONG64			DiskSysSize = 0;
-
+	PVOID			DriverBase = 0;
+	ULONG64			DriverSize = 0;
 
 
 	//get size of system module information
@@ -130,26 +127,25 @@ PVOID getDiskSysBase(OUT PULONG pSize)
 
 	if (NT_SUCCESS(Status))
 	{
-		DbgPrint("ZwQuerySystemInformation inside getkernelbase succeed\n");
 		PRTL_PROCESS_MODULE_INFORMATION pMod = arrayOfModules->Modules;
 		for (int i = 0; i < arrayOfModules->NumberOfModules; ++i)
 		{
 			//list the module names:
 
-			DbgPrint("Image name: %s\n", pMod[i].FullPathName + pMod[i].OffsetToFileName); 
+			DbgPrint("Image name: %s\n", pMod[i].FullPathName + pMod[i].OffsetToFileName);
 			// path name plus some amount of characters will lead to the name itself
 			const char* DriverName = (const char*)pMod[i].FullPathName + pMod[i].OffsetToFileName;
 
-			if (strcmp(DriverName, "disk.sys") == 0)
+			if (strcmp(DriverName, driverName) == 0)
 			{
-				DbgPrint("found disk.sys\n");
+				DbgPrint("found driver\n");
 
 
-				diskSysBase = pMod[i].ImageBase;
-				DiskSysSize = pMod[i].ImageSize;
+				DriverBase = pMod[i].ImageBase;
+				DriverSize = pMod[i].ImageSize;
 
-				DbgPrint("Disk.sys Size : %i\n", DiskSysSize);
-				DbgPrint("Disk.sys Base : %p\n", diskSysBase);
+				DbgPrint("kernel module Size : %i\n", DriverSize);
+				DbgPrint("kernel module Base : %p\n", DriverBase);
 
 
 				if (arrayOfModules)
@@ -158,8 +154,8 @@ PVOID getDiskSysBase(OUT PULONG pSize)
 
 
 
-				*pSize = DiskSysSize;
-				return diskSysBase;
+				*pSize = DriverSize;
+				return DriverBase;
 			}
 		}
 	}
@@ -168,9 +164,10 @@ PVOID getDiskSysBase(OUT PULONG pSize)
 
 
 
-	*pSize = DiskSysSize;
-	return (PVOID)diskSysBase;
+	*pSize = DriverSize;
+	return (PVOID)DriverBase;
 }
+
 
 
 
@@ -206,7 +203,7 @@ NTSTATUS BBSearchPattern(IN PCUCHAR pattern, IN UCHAR wildcard, IN ULONG_PTR len
 
 
 
-NTSTATUS BBScanSection(IN PCCHAR section, IN PCUCHAR pattern, IN UCHAR wildcard, IN ULONG_PTR len, OUT PVOID* ppFound, PVOID base = nullptr, BOOLEAN dataOnly = FALSE)
+NTSTATUS BBScanSection(IN PCCHAR section, IN PCUCHAR pattern, IN UCHAR wildcard, IN ULONG_PTR len, OUT PVOID* ppFound, PVOID base = nullptr)
 {
 
 	//ASSERT(ppFound != NULL);
@@ -233,7 +230,7 @@ NTSTATUS BBScanSection(IN PCCHAR section, IN PCUCHAR pattern, IN UCHAR wildcard,
 		ANSI_STRING s1, s2;
 		RtlInitAnsiString(&s1, section);
 		RtlInitAnsiString(&s2, (PCCHAR)pSection->Name);
-		if ((dataOnly == FALSE) && ((RtlCompareString(&s1, &s2, TRUE) == 0) || (pSection->Characteristics & IMAGE_SCN_CNT_CODE) || (pSection->Characteristics & IMAGE_SCN_MEM_EXECUTE)))
+		if (((RtlCompareString(&s1, &s2, TRUE) == 0) || (pSection->Characteristics & IMAGE_SCN_CNT_CODE) || (pSection->Characteristics & IMAGE_SCN_MEM_EXECUTE)))
 		{
 
 			NTSTATUS status = BBSearchPattern(pattern, wildcard, len, (PUCHAR)base + pSection->VirtualAddress, pSection->Misc.VirtualSize, &ptr);
@@ -242,19 +239,6 @@ NTSTATUS BBScanSection(IN PCCHAR section, IN PCUCHAR pattern, IN UCHAR wildcard,
 				DbgPrint("found\r\n");
 				return status;
 			}
-			//we continue scanning because there can be multiple sections with the same name.
-		}
-		else if ((dataOnly == TRUE) && (RtlCompareString(&s1, &s2, TRUE) == 0))
-		{
-			DbgPrint("valid section\r\n");
-			ptr = NULL;
-			NTSTATUS status = BBSearchPattern(pattern, wildcard, len, (PUCHAR)base + pSection->VirtualAddress, pSection->Misc.VirtualSize, &ptr);
-			if (NT_SUCCESS(status)) {
-				*(PULONG64)ppFound = (ULONG_PTR)(ptr); //- (PUCHAR)base
-				DbgPrint("BBscansection(): found at address: %p ", *(PULONG64)ppFound);
-				return status;
-			}
-			return status;
 			//we continue scanning because there can be multiple sections with the same name.
 		}
 	}

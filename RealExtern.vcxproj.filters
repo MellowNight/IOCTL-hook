@@ -41,5 +41,8 @@
     <ClInclude Include="commandsOffsets.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="placeHooks.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
