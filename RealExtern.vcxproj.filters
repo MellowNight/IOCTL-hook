@@ -38,10 +38,10 @@
     <ClInclude Include="kdmapperTraces.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="commandsOffsets.h">
+    <ClInclude Include="placeHooks.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="placeHooks.h">
+    <ClInclude Include="Globals.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

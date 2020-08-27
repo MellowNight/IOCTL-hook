@@ -18,7 +18,7 @@ DWORD64 initialize(HANDLE processID, HANDLE clientProcessID, communicationStruct
 
 	BOOLEAN				isclientWow64 = (PsGetProcessWow64Process(Globals::clientProcess) != NULL) ? TRUE : FALSE;
 
-	DWORD64				clientBaseAddress = (ULONG64)GetUserModule(Globals::clientProcess, &clientprocessName, isclientWow64); 
+	DWORD64				clientBaseAddress = (ULONG64)Utils::GetUserModule(Globals::clientProcess, &clientprocessName, isclientWow64); 
 
 	Globals::ClientBaseAddress = clientBaseAddress;
 
@@ -30,28 +30,29 @@ DWORD64 initialize(HANDLE processID, HANDLE clientProcessID, communicationStruct
 
 	UNICODE_STRING		processName;
 
-	RtlInitUnicodeString(&processName, systemBuffer->targetmoduleName);
-
 	BOOLEAN				isWow64 = (PsGetProcessWow64Process(Globals::TargetProcess) != NULL) ? TRUE : FALSE;
 
 	DWORD64				gameBaseAddress = 0;
 
 
+	RtlInitUnicodeString(&processName, systemBuffer->targetmoduleName);
 
 
 	KAPC_STATE apc;
 	KeStackAttachProcess(Globals::TargetProcess, &apc);
 
-	gameBaseAddress	 =	(ULONG64)GetUserModule(Globals::TargetProcess, &processName, isWow64);
-
-	Globals::GameBaseAddress = gameBaseAddress;
-
-	KeUnstackDetachProcess(&apc);
+	gameBaseAddress	 =	(ULONG64)Utils::GetUserModule(Globals::TargetProcess, &processName, isWow64);
 
 	if (gameBaseAddress == 0)
 	{
 		gameBaseAddress = 0x400000;
 	}
+
+	Globals::GameBaseAddress = gameBaseAddress;
+
+	KeUnstackDetachProcess(&apc);
+
+
 
 
 
@@ -66,9 +67,7 @@ DWORD64 initialize(HANDLE processID, HANDLE clientProcessID, communicationStruct
 	/*	sig scan for our communication buffer (kernel -> user communication)	*/
 
 	UCHAR	pattern[8];
-
 	UINT64	realPattern = 0xFFFF8F08F280E084;
-
 	RtlCopyMemory(pattern, (PVOID64)&realPattern, sizeof(UINT64));
 
 
@@ -76,7 +75,6 @@ DWORD64 initialize(HANDLE processID, HANDLE clientProcessID, communicationStruct
 
 
 	Globals::readOutputAddress += 8;
-
 	Globals::readOutputAddress = *(DWORD64*)Globals::readOutputAddress;
 	
 
@@ -137,7 +135,7 @@ void	hookedIoctlhandler(communicationStruct* SystemBuffer)
 
 		/*	Read memory		*/
 
-		ReadMemory(SystemBuffer->address, (PVOID)&SystemBuffer->buffer, SystemBuffer->size,
+		Utils::ReadMemory(SystemBuffer->address, (PVOID)&SystemBuffer->buffer, SystemBuffer->size,
 			Globals::TargetProcess, Globals::clientProcess, (PVOID)Globals::readOutputAddress);		
 		break;
 
@@ -145,7 +143,7 @@ void	hookedIoctlhandler(communicationStruct* SystemBuffer)
 
 		/*	Write memory	*/
 
-		WriteMemory(SystemBuffer->address, (PVOID)&SystemBuffer->buffer, SystemBuffer->size, Globals::TargetProcess);	
+		Utils::WriteMemory(SystemBuffer->address, (PVOID)&SystemBuffer->buffer, SystemBuffer->size, Globals::TargetProcess);	
 		break;
 
 	case	initProcessInfoCommand:
@@ -160,7 +158,7 @@ void	hookedIoctlhandler(communicationStruct* SystemBuffer)
 			(PVOID64*)&SystemBuffer->address, (PVOID64)Globals::GameBaseAddress);
 		KeUnstackDetachProcess(&apcState);
 
-		WriteMemory(Globals::readOutputAddress, &SystemBuffer->address, sizeof(DWORD64), Globals::clientProcess);
+		Utils::WriteMemory(Globals::readOutputAddress, &SystemBuffer->address, sizeof(DWORD64), Globals::clientProcess);
 
 		break;
 
@@ -198,11 +196,21 @@ void	hookedIoctlhandler(communicationStruct* SystemBuffer)
 }
 
 
+
+
+
+
+/*
+hookedIoctl()
+
+padding for the shellcode
+here we get info from IRP system buffer (RSI)	
+hook my own function like a moron because microsoft wont let me use inline asm
+*/
+
 #pragma optimize("", off)
 void	hookedIoctl()
 {
-	/* padding for the shellcode
-	here we get info from IRP system buffer (RSI)	*/
 
 	int a1 = 1;
 	int a2 = 1;
@@ -211,7 +219,7 @@ void	hookedIoctl()
 
 	hookedIoctlhandler(Globals::SystemBuffer);
 
-	// hook my own function like a moron because microsoft wont let me use inline asm
+
 
 	int a5 = 1;
 	int a6 = 1;		// 32 free bytes

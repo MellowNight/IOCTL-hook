@@ -1,38 +1,64 @@
 #pragma once
 #include "KernelUtils.h"
 #include "kdmapperTraces.h"
-#include "commandsOffsets.h"
+#include "Globals.h"
+
+
+
+void	placeJMP(ULONG64	addr, ULONG64	jmpAddr, BYTE* oldBytes)
+{
+	KIRQL	tempIRQL = Utils::disableWP();
+
+	if (oldBytes != NULL)
+	{
+		memcpy(oldBytes, (PVOID64)addr, 12);
+	}
+
+	memcpy(Shellcode::JmpRax + 2, &jmpAddr, 8);
+
+	memcpy((PVOID64)addr, Shellcode::JmpRax, 12);
+
+	Utils::enableWP(tempIRQL);
+
+	return;
+}
+
+
+void	grabR14(ULONG64	shellcodeAddr, ULONG64	outBuffer, BYTE* oldBytes)
+{
+	KIRQL	tempIRQL = Utils::disableWP();
+
+	if (oldBytes != NULL)
+	{
+		memcpy(oldBytes, (PVOID64)shellcodeAddr, 15);
+	}
+
+	memcpy(Shellcode::grabR14 + 3, &outBuffer, 8);
+
+	memcpy((PVOID64)shellcodeAddr, Shellcode::grabR14, 12);
+
+	Utils::enableWP(tempIRQL);
+
+	return;
+}
 
 
 /*
 
 what this does:
 
-1. places code in hooked ioctl to intercept IRP system buffer
+1. places code in hooked ioctl to intercept IRP system buffer (in register R14)
 2. places code in hooked ioctl to jump back to IoctlDiskVerify() in disk.sys
 
 */
 BOOLEAN PlaceMyHook()
 {
 	ULONG		diskSysSize;
-	PVOID		diskSysBase = getDriverBaseAddress(&diskSysSize, "disk.sys");
+	PVOID		diskSysBase = Utils::getDriverBaseAddress(&diskSysSize, "disk.sys");
 
-	ULONG64		returnPlaceOfIOCTL = (ULONG64)diskSysBase + HookOffsets::exit1909;
+	ULONG64		exit = (ULONG64)diskSysBase + HookOffsets::exit1909;
 
-	//grab values from rsi and r14 (device object and pirp)
-
-	ULONG64		functionPointer = (ULONG64)(PVOID64)hookedIoctl;
-
-	functionPointer += 48;	 /*		skip past all the code	instructions		*/
-
-	UCHAR		shellCode[] = "\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xE0";
-
-	ULONG64		jumpAddress = (ULONG64)(PVOID64)returnPlaceOfIOCTL;
-
-	memcpy(shellCode + 2, &jumpAddress, 8);
-
-
-
+	ULONG64		hookedioctl = (ULONG64)(PVOID64)hookedIoctl;
 
 
 
@@ -46,46 +72,23 @@ BOOLEAN PlaceMyHook()
 	*/
 
 
-	UCHAR		shellCodeForR14[] = "\x56\x48\xB8\x00\x00\x00\x00\x00\x00\x00\x00\x8f\x00\x90\x90";
+
+
+	hookedioctl += 48;
+
+	placeJMP(hookedioctl, exit, NULL);
+
+	hookedioctl = (ULONG64)(PVOID64)hookedIoctl;
+
+	hookedioctl += 21;			// these magic numbers are offsets from hookedioctl() function
 
 	PVOID64 iinterceptedIRP = &Globals::interceptedIRP;
-	memcpy(shellCodeForR14 + 3, (PVOID64)(&iinterceptedIRP), 8);
+
+	grabR14(hookedioctl, (ULONG64)iinterceptedIRP, NULL);
 
 
-	DbgPrint("address of intercepted IRP pointer is: %p \n", (ULONG64)&Globals::interceptedIRP);
 
-	if (MmIsAddressValid((PVOID)functionPointer) && MmIsAddressValid((PVOID)(functionPointer + sizeof(shellCode) - 1)))
-	{
-		KIRQL   tempirql = KeRaiseIrqlToDpcLevel();
-
-		ULONG64  cr0 = __readcr0();
-
-		cr0 &= 0xfffffffffffeffff;
-
-		__writecr0(cr0);
-
-		_disable();
-
-		RtlCopyMemory((PVOID)functionPointer, shellCode, 12);
-
-		functionPointer = (ULONG64)(PVOID64)hookedIoctl;
-
-		functionPointer += 21; // should be 20 if it is push r14, 21 if its push rsi
-
-		RtlCopyMemory((PVOID)functionPointer, shellCodeForR14, sizeof(shellCodeForR14) - 1);
-		cr0 = __readcr0();
-
-		cr0 |= 0x10000;
-
-		_enable();
-
-		__writecr0(cr0);
-
-		KeLowerIrql(tempirql);
-	}
 	return TRUE;
-
-
 }
 
 
@@ -93,50 +96,18 @@ BOOLEAN PlaceMyHook()
 BOOLEAN PlaceDiskHook()
 {
 	ULONG		diskSysSize;
-	PVOID		diskSysBase = getDriverBaseAddress(&diskSysSize, "disk.sys");
+	PVOID		diskSysBase = Utils::getDriverBaseAddress(&diskSysSize, "disk.sys");
 
 
 
 	ULONG64		hookLocation = (ULONG64)diskSysBase + HookOffsets::hook1909;
 
-
-
-
-	BYTE		shellCode[] = { 0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xE0 };
-
 	ULONG64		jumpAddress = (ULONG64)(PVOID64)hookedIoctl;
 	jumpAddress += 21;
 
-	memcpy(shellCode + 2, &jumpAddress, 8);
+	placeJMP(hookLocation, jumpAddress, NULL);
 
 
-
-
-	if (MmIsAddressValid((PVOID)hookLocation) && MmIsAddressValid((PVOID)(hookLocation + sizeof(shellCode) - 1)))
-	{
-		KIRQL   tempirql = KeRaiseIrqlToDpcLevel();
-
-		ULONG64  cr0 = __readcr0();
-
-		cr0 &= 0xfffffffffffeffff;
-
-		__writecr0(cr0);
-
-		_disable();
-
-		RtlCopyMemory((PVOID64)hookLocation, shellCode, 12);
-
-		cr0 = __readcr0();
-
-		cr0 |= 0x10000;
-
-		_enable();
-
-		__writecr0(cr0);
-
-		KeLowerIrql(tempirql);
-	}
 	return TRUE;
-
 }
 

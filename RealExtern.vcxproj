@@ -166,7 +166,7 @@
     <ClCompile Include="Driver.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="commandsOffsets.h" />
+    <ClInclude Include="Globals.h" />
     <ClInclude Include="kdmapperTraces.h" />
     <ClInclude Include="KernelUtils.h" />
     <ClInclude Include="placeHooks.h" />
