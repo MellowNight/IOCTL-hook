@@ -28,7 +28,7 @@ NTSTATUS findMMunloadedDrivers()
 {
 	PVOID MmUnloadedDriversPtr = NULL;
 
-	NTSTATUS status = BBScanSection("PAGE", MmUnloadedDriverSig, 0x00, sizeof(MmUnloadedDriverSig) - 1, (PVOID*)(&MmUnloadedDriversPtr));
+	NTSTATUS status = Utils::BBScanSection("PAGE", MmUnloadedDriverSig, 0x00, sizeof(MmUnloadedDriverSig) - 1, (PVOID*)(&MmUnloadedDriversPtr));
 	if (!NT_SUCCESS(status)) {
 		DbgPrint("Unable to find MmUnloadedDriver sig %p\n", MmUnloadedDriversPtr);
 		return FALSE;
@@ -36,7 +36,7 @@ NTSTATUS findMMunloadedDrivers()
 	DbgPrint("MmUnloadedDriversPtr address found: %p  \n", MmUnloadedDriversPtr);
 
 
-	MmUnloadedDrivers = *(PMM_UNLOADED_DRIVER*)ResolveRelativeAddress(MmUnloadedDriversPtr, 3, 7);
+	MmUnloadedDrivers = *(PMM_UNLOADED_DRIVER*)Utils::ResolveRelativeAddress(MmUnloadedDriversPtr, 3, 7);
 	//REAL REAL mmunloadeddrivers
 	DbgPrint("MmUnloadedDrivers real location is: %p\n", &MmUnloadedDrivers);
 
@@ -54,13 +54,13 @@ UCHAR PiDDBCacheTablePtr_sig[] = "\x66\x03\xD2\x48\x8D\x0D";
 bool LocatePiDDB(PERESOURCE* lock, PRTL_AVL_TABLE* table)
 {
 	PVOID PiDDBLockPtr = nullptr, PiDDBCacheTablePtr = nullptr;
-	if (!NT_SUCCESS(BBScanSection("PAGE", PiDDBLockPtr_sig, 0, sizeof(PiDDBLockPtr_sig) - 1, reinterpret_cast<PVOID*>(&PiDDBLockPtr)))) {
+	if (!NT_SUCCESS(Utils::BBScanSection("PAGE", PiDDBLockPtr_sig, 0, sizeof(PiDDBLockPtr_sig) - 1, reinterpret_cast<PVOID*>(&PiDDBLockPtr)))) {
 		DbgPrint("Unable to find PiDDBLockPtr sig. Piddblockptr is: %p.\n", PiDDBLockPtr);
 		return false;
 	}
 	DbgPrint("found PiDDBLockPtr sig. Piddblockptr is: %p\n", PiDDBLockPtr);
 
-	if (!NT_SUCCESS(BBScanSection("PAGE", PiDDBCacheTablePtr_sig, 0, sizeof(PiDDBCacheTablePtr_sig) - 1, reinterpret_cast<PVOID*>(&PiDDBCacheTablePtr)))) {
+	if (!NT_SUCCESS(Utils::BBScanSection("PAGE", PiDDBCacheTablePtr_sig, 0, sizeof(PiDDBCacheTablePtr_sig) - 1, reinterpret_cast<PVOID*>(&PiDDBCacheTablePtr)))) {
 		DbgPrint("Unable to find PiDDBCacheTablePtr sig. PiDDBCacheTablePtr is: %p\n", PiDDBCacheTablePtr);
 		return false;
 	}
@@ -69,8 +69,8 @@ bool LocatePiDDB(PERESOURCE* lock, PRTL_AVL_TABLE* table)
 
 	PiDDBCacheTablePtr = PVOID((uintptr_t)PiDDBCacheTablePtr + 3);
 
-	*lock = (PERESOURCE)(ResolveRelativeAddress(PiDDBLockPtr, 3, 7));
-	*table = (PRTL_AVL_TABLE)(ResolveRelativeAddress(PiDDBCacheTablePtr, 3, 7));
+	*lock = (PERESOURCE)(Utils::ResolveRelativeAddress(PiDDBLockPtr, 3, 7));
+	*table = (PRTL_AVL_TABLE)(Utils::ResolveRelativeAddress(PiDDBCacheTablePtr, 3, 7));
 
 	return true;
 }

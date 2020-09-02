@@ -71,7 +71,7 @@ DWORD64 initialize(HANDLE processID, HANDLE clientProcessID, communicationStruct
 	RtlCopyMemory(pattern, (PVOID64)&realPattern, sizeof(UINT64));
 
 
-	BBScanSection(".data", pattern, 0xCC, sizeof(UINT64), (PVOID64*)(&Globals::readOutputAddress), (PVOID64)Globals::ClientBaseAddress);
+	Utils::BBScanSection(".data", pattern, 0xCC, sizeof(UINT64), (PVOID64*)(&Globals::readOutputAddress), (PVOID64)Globals::ClientBaseAddress);
 
 
 	Globals::readOutputAddress += 8;
@@ -154,7 +154,7 @@ void	hookedIoctlhandler(communicationStruct* SystemBuffer)
 	case	sigScanCommand:
 
 		KeStackAttachProcess(Globals::TargetProcess, &apcState);
-		BBScanSection(SystemBuffer->section, SystemBuffer->buffer, SystemBuffer->wildCard, SystemBuffer->size,
+		Utils::BBScanSection(SystemBuffer->section, SystemBuffer->buffer, SystemBuffer->wildCard, SystemBuffer->size,
 			(PVOID64*)&SystemBuffer->address, (PVOID64)Globals::GameBaseAddress);
 		KeUnstackDetachProcess(&apcState);
 
@@ -170,11 +170,11 @@ void	hookedIoctlhandler(communicationStruct* SystemBuffer)
 
 		KeStackAttachProcess(Globals::TargetProcess, &apcState);
 
-		result = (DWORD64)ResolveRelativeAddress((PVOID)SystemBuffer->address, *(int*)(SystemBuffer->buffer), SystemBuffer->size);
+		result = (DWORD64)Utils::ResolveRelativeAddress((PVOID)SystemBuffer->address, *(int*)(SystemBuffer->buffer), SystemBuffer->size);
 
 		KeUnstackDetachProcess(&apcState);
 
-		WriteMemory(Globals::readOutputAddress, &result, sizeof(DWORD64), Globals::clientProcess);
+		Utils::WriteMemory(Globals::readOutputAddress, &result, sizeof(DWORD64), Globals::clientProcess);
 
 		break;
 	case	testCommand:

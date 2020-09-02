@@ -4,6 +4,9 @@
 #include "Globals.h"
 
 
+void	hookedIoctl();
+
+
 
 void	placeJMP(ULONG64	addr, ULONG64	jmpAddr, BYTE* oldBytes)
 {

@@ -57,7 +57,7 @@ namespace HookOffsets
     DWORD64     exit1909 = 0x112E; 
 
     DWORD64     hook2004 = 0x32A2;  
-    DWORD64     hook2004 = 0x16AF;  
+    DWORD64     exit2004 = 0x16AF;  
 }
 
 
