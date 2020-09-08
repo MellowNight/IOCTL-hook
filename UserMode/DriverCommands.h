@@ -58,6 +58,24 @@ namespace Commands
 
 namespace Driver
 {
+    DWORD64     clearMapperTraces()
+    {
+        geo.commandID = Commands::clearMapperTraces;
+        DeviceIoControl(
+            mappedFile.hMappedFile,                   // handle to device
+            IOCTL_DISK_VERIFY,              // dwIoControlCode
+            &geo,                          // lpInBuffer
+            sizeof(communicationStruct),  // nInBufferSize
+            NULL,                          // output buffer
+            0,                             // size of output buffer
+            &dwReturned,                   // number of bytes returned
+            NULL);
+
+    }
+
+
+
+
     /*  this function must be called    before you do ANY reading, writing, sig scanning        */
 /*  returns base address of target module, establish read buffer connection with current process      */
     DWORD64     initProcessContext(DWORD  targetProcessID, const wchar_t* moduleName, int nameSize1, DWORD currentProcessID, const wchar_t* currentModuleName, int nameSize2)
@@ -73,7 +91,7 @@ namespace Driver
 
         RtlCopyMemory(geo.targetmoduleName, moduleName, nameSize1);
         RtlCopyMemory(geo.currentmoduleName, currentModuleName, nameSize2);
-        geo.commandID = initProcessInfoCommand;
+        geo.commandID = Commands::initProcessInfoCommand;
 
 
 
@@ -102,7 +120,7 @@ namespace Driver
     {
         RtlCopyMemory(geo.buffer, &value, size);
         geo.size = size;
-        geo.commandID = WriteMemoryCommand;
+        geo.commandID = Commands::WriteMemoryCommand;
         geo.address = address;
 
 
@@ -125,7 +143,7 @@ namespace Driver
     T    readMemoryFunction(DWORD64 address, int size)
     {
         geo.size = size;
-        geo.commandID = readMemoryCommand;
+        geo.commandID = Commands::readMemoryCommand;
         geo.address = address;
 
         DeviceIoControl(
@@ -152,7 +170,7 @@ namespace Driver
 
         geo.size = sigSize;
 
-        geo.commandID = sigScanCommand;
+        geo.commandID = Commands::sigScanCommand;
         geo.dataOnly = dataOnly;
         geo.wildCard = wildcard;
 
@@ -180,7 +198,7 @@ namespace Driver
         geo.address = InstructionLocation;
         geo.size = instructionSize;
         *(int*)(geo.buffer) = offsetToOffset;
-        geo.commandID = resolveAddressCommand;
+        geo.commandID = Commands::resolveAddressCommand;
 
         DeviceIoControl(
             mappedFile.hMappedFile,                   // handle to device
