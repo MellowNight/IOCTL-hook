@@ -1,4 +1,4 @@
-example usage functions in UserMode.cpp
+example usage functions in driverCommands.h
 
 # realExtern
 kernel driver that hooks ioctl with multiple abilities such as sig scanning and read/writing
