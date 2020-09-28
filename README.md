@@ -10,7 +10,9 @@ hook offsets may change across windows updates.
 
 ## WARNING:
 
-it is detected and the code is very messy
+it is detected and the code is very messy.
+
+Find a better communication method (for example function pointer replacement) for your driver cheat.
 
 
 read this source for an example of how to use:
